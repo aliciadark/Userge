@@ -69,7 +69,7 @@ async def core(message: Message):
 
         out = _updates_to_str(updates)
         await message.edit_or_send_as_file(
-            f"**{len(updates)}** old commits for core repo\n\n{out}",
+            f"**{len(updates)}** old commits of core repo\n\n{out}",
             del_in=0, disable_web_page_preview=True)
 
     elif set_branch or set_version:
@@ -121,7 +121,7 @@ async def core(message: Message):
 @userge.on_cmd("repos", about={
     'header': "view or manage plugins repositories",
     'flags': {
-        '-f': "fetch all plugins repos",
+        '-f': "fetch one or all plugins repos",
         '-id': "plugins repo id (grab using {tr}repos)",
         '-n': "view available new commits",
         '-o': "view old commits (default limit 20)",
@@ -132,7 +132,9 @@ async def core(message: Message):
     'usage': "{tr}repos [flags]",
     'examples': [
         "{tr}repos : see plugins repos info",
-        "{tr}repos -f", "{tr}repos -id=1 -n",
+        "{tr}repos -f : fetch all plugins repos",
+        "{tr}repos -id=1 -f : only fetch this repo",
+        "{tr}repos -id=1 -n",
         "{tr}repos -f -id=1 -n : fetch and get updates",
         "{tr}repos -id=1 -o", "{tr}repos -id=1 -o=20 : limit results to 20",
         "{tr}repos -id=1 -b=master",
@@ -152,11 +154,9 @@ async def repos(message: Message):
 
     await message.edit("```processing ...```")
 
-    if fetch:
-        await api.fetch_repos()
-
     if repo_id <= 0:
         if fetch:
+            await api.fetch_repos()
             await message.edit("```fetched plugins repos```", del_in=3)
 
         elif invalidate:
@@ -187,6 +187,9 @@ async def repos(message: Message):
             await message.edit_or_send_as_file(out, del_in=0, disable_web_page_preview=True)
 
     else:
+        if fetch:
+            await api.fetch_repo(repo_id)
+
         repo_details = await api.get_repo(repo_id)
 
         if not repo_details:
@@ -202,7 +205,7 @@ async def repos(message: Message):
 
             out = _updates_to_str(updates)
             await message.edit_or_send_as_file(
-                f"{len(updates)} new commits available for repo: {repo_id}\n\n{out}",
+                f"**{len(updates)}** new commits available for repo: `{repo_id}`\n\n{out}",
                 del_in=0, disable_web_page_preview=True)
 
         elif get_old:
@@ -214,7 +217,7 @@ async def repos(message: Message):
 
             out = _updates_to_str(updates)
             await message.edit_or_send_as_file(
-                f"{len(updates)} old commits for repo: {repo_id}\n\n{out}",
+                f"**{len(updates)}** old commits of repo: `{repo_id}`\n\n{out}",
                 del_in=0, disable_web_page_preview=True)
 
         elif set_branch or set_version or set_priority:
@@ -251,7 +254,7 @@ async def repos(message: Message):
                 await message.edit("```didn't change anything```", del_in=3)
 
         elif fetch:
-            await message.edit("```fetched plugins repos```", del_in=3)
+            await message.edit(f"```fetched plugins repo: {repo_id}```", del_in=3)
 
         else:
             await message.err("invalid flags")
